@@ -37,23 +37,23 @@ func NewDefaultLocalRetry(attempts uint) *LocalRetry {
 }
 
 type Config struct {
-	ClientId          string
-	Addr              string
-	UserName          string
-	Password          string
-	CleanSession      bool
-	DefaultSubHandler Handler
-	Debug             bool
-	ClientLogger      logger.Logger
-	PubLogger         logger.Logger
-	SubLogger         logger.Logger
+	ClientId              string
+	Addr                  string
+	UserName              string
+	Password              string
+	CleanSession          bool
+	DefaultPublishHandler Handler
+	Debug                 bool
+	ClientLogger          logger.Logger
+	PubLogger             logger.Logger
+	SubLogger             logger.Logger
 }
 
 type Option func(*Config)
 
-func WithDefaultSubHandler(val Handler) Option {
+func WithDefaultPublishHandler(val Handler) Option {
 	return func(opts *Config) {
-		opts.DefaultSubHandler = val
+		opts.DefaultPublishHandler = val
 	}
 }
 
@@ -87,9 +87,6 @@ func New(c *Config) *Client {
 	}
 	if c.ClientId == "" {
 		panic("ClientId 必须设置")
-	}
-	if c.DefaultSubHandler == nil {
-		panic("DefaultSubHandler 必须设置")
 	}
 	if c.PubLogger == nil {
 		panic("PubLogger 必须设置")
@@ -141,11 +138,20 @@ func New(c *Config) *Client {
 	})
 
 	opts.SetDefaultPublishHandler(func(client mqtt.Client, msg mqtt.Message) {
+		if c.DefaultPublishHandler == nil {
+			c.SubLogger.Info(
+				string(msg.Payload()),
+				logger.NewField("topic", msg.Topic()),
+				logger.NewField("id", fmt.Sprintf("%d", msg.MessageID())),
+				logger.NewField("error", ""),
+			)
+			return
+		}
 		go SubscribeHandler(client, msg, &SubConfig{
 			Qos:       1,
 			LogLevel:  "info",
 			SubLogger: c.SubLogger,
-		}, c.DefaultSubHandler)
+		}, c.DefaultPublishHandler)
 	})
 	//opts.SetWill("disconnect/"+config.ClientId, "", 1, false)
 

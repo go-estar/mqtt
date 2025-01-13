@@ -9,27 +9,27 @@ import (
 	"strings"
 )
 
-func subHandler(topic string, msg []byte) error {
-	fmt.Println("sub", topic, string(msg))
+func defaultHandler(topic string, msg []byte) error {
+	fmt.Println("defaultHandler", topic, string(msg))
 	return nil
 }
 
 func main() {
 	clientId := "342"
 	client := mqtt.New(&mqtt.Config{
-		Addr:              "127.0.0.1:1883",
-		UserName:          "pos",
-		Password:          "M9o!ejN@1fm#oH#M",
-		ClientId:          clientId,
-		CleanSession:      false,
-		ClientLogger:      logger.NewZap("mqtt-client", "info"),
-		PubLogger:         logger.NewZap("mqtt-pub", "info"),
-		SubLogger:         logger.NewZap("mqtt-sub", "info"),
-		DefaultSubHandler: subHandler,
+		Addr:                  "127.0.0.1:1883",
+		UserName:              "pos",
+		Password:              "M9o!ejN@1fm#oH#M",
+		ClientId:              clientId,
+		CleanSession:          false,
+		ClientLogger:          logger.NewZap("mqtt-client", "info"),
+		PubLogger:             logger.NewZap("mqtt-pub", "info"),
+		SubLogger:             logger.NewZap("mqtt-sub", "info"),
+		DefaultPublishHandler: defaultHandler,
 	})
 
-	client.Subscribe("pingres/"+clientId, subHandler, mqtt.SubWithLogLevel("info"))
-	client.Subscribe("order/"+clientId, subHandler, mqtt.SubWithLogLevel("info"))
+	client.Subscribe("pong/"+clientId, defaultHandler, mqtt.SubWithLogLevel("info"))
+	client.Subscribe("order/"+clientId, defaultHandler, mqtt.SubWithLogLevel("info"))
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {

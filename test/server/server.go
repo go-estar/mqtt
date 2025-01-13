@@ -10,34 +10,35 @@ import (
 	"strings"
 )
 
-func subHandler(topic string, msg []byte) error {
-	fmt.Println("sub", topic, string(msg))
+func defaultHandler(topic string, msg []byte) error {
+	fmt.Println("defaultHandler", topic, string(msg))
 	return nil
 }
 
 func main() {
 	client := mqtt.New(&mqtt.Config{
-		Addr:              "127.0.0.1:1883",
-		UserName:          "server",
-		Password:          "s28wfCMn##Y!znu6",
-		ClientId:          "server1",
-		CleanSession:      false,
-		ClientLogger:      logger.NewZap("mqtt-client", "info"),
-		PubLogger:         logger.NewZap("mqtt-pub", "info"),
-		SubLogger:         logger.NewZap("mqtt-sub", "info"),
-		DefaultSubHandler: subHandler,
+		Addr:                  "127.0.0.1:1883",
+		UserName:              "server",
+		Password:              "s28wfCMn##Y!znu6",
+		ClientId:              "server1",
+		CleanSession:          false,
+		ClientLogger:          logger.NewZap("mqtt-client", "info"),
+		PubLogger:             logger.NewZap("mqtt-pub", "info"),
+		SubLogger:             logger.NewZap("mqtt-sub", "info"),
+		DefaultPublishHandler: defaultHandler,
 	})
 
-	client.Subscribe("disconnect/+", subHandler, mqtt.SubWithLogLevel("info"))
+	client.Subscribe("connect/+", defaultHandler, mqtt.SubWithLogLevel("info"))
+	client.Subscribe("disconnect/+", defaultHandler, mqtt.SubWithLogLevel("info"))
 
-	if err := client.Subscribe("pingreq/+", func(topic string, msg []byte) error {
+	if err := client.Subscribe("ping/+", func(topic string, msg []byte) error {
 		fmt.Println("sub", topic, string(msg))
 		//return errors.New("fucked")
 		arr := strings.Split(topic, "/")
 		if len(arr) != 2 {
 			return errors.New("message format mismatch")
 		}
-		if err := client.Publish("pingres/"+arr[1], "res"); err != nil {
+		if err := client.Publish("pong/"+arr[1], "res"); err != nil {
 			return err
 		}
 		return nil
