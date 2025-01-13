@@ -51,6 +51,12 @@ type Config struct {
 
 type Option func(*Config)
 
+func WithDefaultSubHandler(val Handler) Option {
+	return func(opts *Config) {
+		opts.DefaultSubHandler = val
+	}
+}
+
 func NewWithConfig(c *config.Config, opts ...Option) *Client {
 	conf := &Config{
 		ClientId:     c.GetString("application.name"),
