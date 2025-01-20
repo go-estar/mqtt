@@ -3,6 +3,7 @@ package mqtt
 import (
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/avast/retry-go/v4"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -346,7 +347,13 @@ func SubscribeHandler(client mqtt.Client, m mqtt.Message, conf *SubConfig, handl
 		ignoreErr = handlerErr
 		handlerErr = nil
 	}
-	if handlerErr == nil {
+	func() {
+		defer func() {
+			if err := recover(); err != nil {
+				handlerErr = errors.New(fmt.Sprint(err))
+				return
+			}
+		}()
 		m.Ack()
-	}
+	}()
 }

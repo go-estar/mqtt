@@ -15,7 +15,7 @@ func defaultHandler(topic string, msg []byte) error {
 }
 
 func main() {
-	clientId := "342"
+	clientId := "123"
 	client := mqtt.New(&mqtt.Config{
 		Addr:                  "127.0.0.1:1883",
 		UserName:              "pos",
@@ -23,13 +23,20 @@ func main() {
 		ClientId:              clientId,
 		CleanSession:          false,
 		ClientLogger:          logger.NewZap("mqtt-client", "info"),
-		PubLogger:             logger.NewZap("mqtt-pub", "info"),
-		SubLogger:             logger.NewZap("mqtt-sub", "info"),
+		PubLogger:             logger.NewZap("mqtt-pub", "error"),
+		SubLogger:             logger.NewZap("mqtt-sub", "error"),
 		DefaultPublishHandler: defaultHandler,
 	})
 
-	client.Subscribe("pong/"+clientId, defaultHandler, mqtt.SubWithLogLevel("info"))
-	client.Subscribe("order/"+clientId, defaultHandler, mqtt.SubWithLogLevel("info"))
+	client.Subscribe("pong/"+clientId, func(topic string, msg []byte) error {
+		fmt.Println("sub", topic, string(msg))
+		return nil
+	}, mqtt.SubWithLogLevel("error"))
+
+	client.Subscribe("order/"+clientId, func(topic string, msg []byte) error {
+		fmt.Println("sub", topic, string(msg))
+		return nil
+	}, mqtt.SubWithLogLevel("error"))
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {

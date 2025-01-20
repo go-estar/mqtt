@@ -24,12 +24,19 @@ func main() {
 		CleanSession:          false,
 		ClientLogger:          logger.NewZap("mqtt-client", "info"),
 		PubLogger:             logger.NewZap("mqtt-pub", "info"),
-		SubLogger:             logger.NewZap("mqtt-sub", "info"),
+		SubLogger:             logger.NewZap("mqtt-sub", "error"),
 		DefaultPublishHandler: defaultHandler,
 	})
 
-	client.Subscribe("connect/+", defaultHandler, mqtt.SubWithLogLevel("info"))
-	client.Subscribe("disconnect/+", defaultHandler, mqtt.SubWithLogLevel("info"))
+	client.Subscribe("connect/+", func(topic string, msg []byte) error {
+		fmt.Println("sub", topic, string(msg))
+		return nil
+	}, mqtt.SubWithLogLevel("error"))
+
+	client.Subscribe("disconnect/+", func(topic string, msg []byte) error {
+		fmt.Println("sub", topic, string(msg))
+		return nil
+	}, mqtt.SubWithLogLevel("error"))
 
 	if err := client.Subscribe("ping/+", func(topic string, msg []byte) error {
 		fmt.Println("sub", topic, string(msg))
@@ -38,7 +45,7 @@ func main() {
 		if len(arr) != 2 {
 			return errors.New("message format mismatch")
 		}
-		if err := client.Publish("pong/"+arr[1], "res"); err != nil {
+		if err := client.Publish("pong/"+arr[1], "asfasfasfs"); err != nil {
 			return err
 		}
 		return nil
